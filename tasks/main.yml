@@ -39,7 +39,7 @@
   file: path={{ mongod_datadir_prefix }} owner={{ mongo_user }} group={{ mongo_group }} state=directory
 
 - name: Create the pid file for the mongod
-  file: path={{ mongod_datadir_prefix }}/mongod_2701.pid owner={{ mongo_user }} group={{ mongo_group }} state=touch mode="u=rw,g=rw,o=r"
+  file: path={{ mongod_datadir_prefix }}/mongod_{{ mongod_port }}.pid owner={{ mongo_user }} group={{ mongo_group }} state=touch mode="u=rw,g=rw,o=r"
 
 - name: Install the mongodb package
   yum: name={{ item }} state=installed
@@ -55,7 +55,7 @@
   file: path={{ mongod_datadir_prefix }}/mongo-{{ mongod_port }} state=directory owner={{ mongo_user }} group={{ mongo_group }}
 
 - name: Create the mongodb startup file for Rhel
-  template: src=mongod.j2 dest=/etc/init.d/mongod-{{ mongod_port }} mode=0655
+  template: src=mongod.j2 dest=/etc/init.d/mongod mode=0655
   when: ansible_os_family == "RedHat"
 
 - name: Create the mongodb startup file for Debian
@@ -65,6 +65,12 @@
 - name: Create the mongodb configuration file
   template: src=mongod.conf.j2 dest=/etc/mongod-{{ mongod_port }}.conf
 
+- name: Create the mongodb log directory
+  file: path=/var/log/mongo/ state=directory owner={{ mongo_user }} group={{ mongo_group }}
+
+- name: Create the mongodb log file
+  file: path=/var/log/mongo/mongod-2701.log state=touch owner={{ mongo_user }} group={{ mongo_group }}
+
 - name: Generate the keyfile for authentication
   set_fact: mongod_secret_key="{{ lookup('password', 'secret length=256 chars=ascii_letters,digits') }}"
 
@@ -72,7 +78,7 @@
   copy: src=secret dest={{ mongod_datadir_prefix }}/secret owner={{ mongo_user }} group={{ mongo_group }} mode=0400
 
 - name: Start the mongodb service for redhat variants
-  command: creates=/var/lock/subsys/mongod-{{ mongod_port }} /etc/init.d/mongod-{{ mongod_port }} start
+  command: creates=/var/lock/subsys/mongod-{{ mongod_port }} /etc/init.d/mongod restart
   when: ansible_os_family == "RedHat"
 
 - name: Start the mongodb service for Ubuntu variants
