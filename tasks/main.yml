@@ -38,6 +38,9 @@
 - name: Create the data directory for the mongod
   file: path={{ mongod_datadir_prefix }} owner={{ mongo_user }} group={{ mongo_group }} state=directory
 
+- name: Create the pid file for the mongod
+  file: path={{ mongod_datadir_prefix }}/mongod_2701.pid owner={{ mongo_user }} group={{ mongo_group }} state=touch mode="u=rw,g=rw,o=r"
+
 - name: Install the mongodb package
   yum: name={{ item }} state=installed
   with_items: mongod_pkgs
